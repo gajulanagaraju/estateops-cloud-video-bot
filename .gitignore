@@ -6,3 +6,4 @@ videos/
 *.mp4
 .google-credentials.json
 .google-token.json
+auth-state.json
