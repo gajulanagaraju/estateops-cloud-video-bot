@@ -6,8 +6,11 @@ const path = require('path');
 
 const { login, dismissOnboarding, navigateToSTR } = require('./tests/helpers');
 const actions = require('./tests/actions');
+const { uploadRun } = require('./tools/upload-drive');
+const { sendReport } = require('./tools/send-report');
 
 const VIDEOS_DIR = path.join(__dirname, 'videos', 'tests');
+const REPORT_EMAIL = 'raju1410@gmail.com';
 const EXCEL_PATH = 'R:/PreSell360App/Testing/STR-estateops-test-cases-filled.xlsx';
 
 // Slug for safe filenames
@@ -73,6 +76,8 @@ async function runTestCase(testCase) {
 }
 
 (async () => {
+  const startTime = Date.now();
+
   // Load test cases from Excel
   const wb = XLSX.readFile(EXCEL_PATH);
   const ws = wb.Sheets[wb.SheetNames[0]];
@@ -102,7 +107,7 @@ async function runTestCase(testCase) {
     results.push(result);
   }
 
-  // Summary
+  const durationMs = Date.now() - startTime;
   const passed = results.filter(r => r.status === 'PASS').length;
   const failed = results.filter(r => r.status === 'FAIL').length;
 
@@ -116,6 +121,39 @@ async function runTestCase(testCase) {
       console.log(`  ✗ [${r.ID}] ${r.Title}`);
       console.log(`    ${r.error}`);
     });
+  }
+
+  // ── UPLOAD TO GOOGLE DRIVE ─────────────────────────────────────────────────
+  const now = new Date();
+  const runLabel = `STR-Run-${now.toISOString().replace(/[:T]/g, '-').slice(0, 19)}`;
+
+  let folderLink = '';
+  try {
+    const { folderLink: link, files } = await uploadRun(VIDEOS_DIR, runLabel);
+    folderLink = link;
+
+    // Attach Drive video links to results
+    files.forEach(f => {
+      const id = f.name.split('-').slice(0, 2).join('-'); // e.g. "TC-STR-001"
+      const match = results.find(r => r.ID === id);
+      if (match) match.videoLink = f.link;
+    });
+  } catch (err) {
+    console.error(`\n⚠ Drive upload failed: ${err.message}`);
+    console.error(`  Run: node tools/google-auth.js  to re-authenticate.`);
+  }
+
+  // ── SEND EMAIL REPORT ──────────────────────────────────────────────────────
+  try {
+    await sendReport({
+      to: REPORT_EMAIL,
+      runLabel,
+      results,
+      folderLink,
+      durationMs,
+    });
+  } catch (err) {
+    console.error(`\n⚠ Email failed: ${err.message}`);
   }
 
   console.log(`\nVideos saved to: ${VIDEOS_DIR}`);

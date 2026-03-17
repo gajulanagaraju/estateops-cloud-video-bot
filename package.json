@@ -11,6 +11,9 @@
   "description": "",
   "dependencies": {
     "dotenv": "^17.3.1",
-    "playwright": "^1.58.2"
+    "googleapis": "^171.4.0",
+    "nodemailer": "^8.0.2",
+    "playwright": "^1.58.2",
+    "xlsx": "^0.18.5"
   }
 }
