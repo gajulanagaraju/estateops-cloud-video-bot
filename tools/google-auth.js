@@ -1,22 +1,21 @@
 /**
  * Run this ONCE to authenticate with Google Drive + Gmail.
- * Creates .google-token.json which is reused for all future runs.
+ * Token is saved to ~/.estateops-google-token.json and reused by all scripts
+ * on this computer — no need to re-authenticate per project.
  *
  * Prerequisites:
  *   1. Go to https://console.cloud.google.com
  *   2. Create a project → Enable "Google Drive API" and "Gmail API"
  *   3. APIs & Services → Credentials → Create OAuth 2.0 Client ID (Desktop App)
- *   4. Download JSON → save as .google-credentials.json in this folder
+ *   4. Download JSON → save to ~/Downloads (keep the original filename)
  *   5. Run: node tools/google-auth.js
  */
 
 const { google } = require('googleapis');
 const fs = require('fs');
-const path = require('path');
 const readline = require('readline');
 
-const CREDS_PATH = path.join(__dirname, '..', '.google-credentials.json');
-const TOKEN_PATH = path.join(__dirname, '..', '.google-token.json');
+const { CREDS_PATH, TOKEN_PATH } = require('./google-paths');
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.file',
@@ -24,12 +23,12 @@ const SCOPES = [
 ];
 
 if (!fs.existsSync(CREDS_PATH)) {
-  console.error(`\n✗ Missing .google-credentials.json\n`);
+  console.error(`\n✗ Google credentials file not found at:\n  ${CREDS_PATH}\n`);
   console.error(`Steps:`);
   console.error(`  1. Go to https://console.cloud.google.com`);
   console.error(`  2. Create project → Enable Drive API + Gmail API`);
   console.error(`  3. Credentials → Create OAuth 2.0 Client ID (Desktop App)`);
-  console.error(`  4. Download JSON → save as .google-credentials.json here\n`);
+  console.error(`  4. Download JSON → save to ~/Downloads (keep original filename)\n`);
   process.exit(1);
 }
 
@@ -48,8 +47,8 @@ rl.question('Paste the authorization code here: ', async (code) => {
   try {
     const { tokens } = await oAuth2Client.getToken(code);
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
-    console.log(`\n✓ Token saved to .google-token.json`);
-    console.log(`  You're now authenticated for Drive + Gmail.\n`);
+    console.log(`\n✓ Token saved to: ${TOKEN_PATH}`);
+    console.log(`  All scripts on this computer will reuse this token.\n`);
   } catch (err) {
     console.error('✗ Error getting token:', err.message);
   }

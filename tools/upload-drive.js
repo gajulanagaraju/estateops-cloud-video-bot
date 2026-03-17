@@ -2,8 +2,8 @@ const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
 
-const CREDS_PATH = path.join(__dirname, '..', '.google-credentials.json');
-const TOKEN_PATH = path.join(__dirname, '..', '.google-token.json');
+const { CREDS_PATH, TOKEN_PATH } = require('./google-paths');
+
 const PARENT_FOLDER_ID = '1CwM9T1JrMR91stop4LBL4cnFCtVttIwE';
 
 function getAuth() {

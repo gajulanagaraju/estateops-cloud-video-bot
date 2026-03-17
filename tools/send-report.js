@@ -1,9 +1,7 @@
 const { google } = require('googleapis');
 const fs = require('fs');
-const path = require('path');
 
-const CREDS_PATH = path.join(__dirname, '..', '.google-credentials.json');
-const TOKEN_PATH = path.join(__dirname, '..', '.google-token.json');
+const { CREDS_PATH, TOKEN_PATH } = require('./google-paths');
 
 function getAuth() {
   const creds = JSON.parse(fs.readFileSync(CREDS_PATH));
