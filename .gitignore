@@ -1,0 +1,6 @@
+.env
+node_modules/
+videos/
+.tmp/
+*.webm
+*.mp4
