@@ -1,7 +1,32 @@
 require('dotenv').config();
+const fs   = require('fs');
+const path = require('path');
 
 const EMAIL = process.env.ESTATEOPS_EMAIL;
 const PASSWORD = process.env.ESTATEOPS_PASSWORD;
+const AUTH_STATE_PATH = path.join(__dirname, '..', 'auth-state.json');
+
+/**
+ * Login once and persist auth state to auth-state.json.
+ * Call this before the test loop. Subsequent contexts load the saved state.
+ */
+async function loginAndSaveState(browser) {
+  const context = await browser.newContext({ viewport: { width: 1600, height: 900 } });
+  const page    = await context.newPage();
+  await login(page);
+  await dismissOnboarding(page);
+  await context.storageState({ path: AUTH_STATE_PATH });
+  await context.close();
+  console.log('  ✓ Auth state saved');
+}
+
+/**
+ * Returns storageState option if auth-state.json exists, else undefined.
+ * New context will start already logged in.
+ */
+function authState() {
+  return fs.existsSync(AUTH_STATE_PATH) ? { storageState: AUTH_STATE_PATH } : {};
+}
 
 async function login(page) {
   await page.goto('https://estateops.cloud', { waitUntil: 'networkidle' });
@@ -93,4 +118,4 @@ async function tryFill(page, selector, value, timeout = 4000) {
   } catch { return false; }
 }
 
-module.exports = { login, dismissOnboarding, navigateToSTR, clickTab, smoothScroll, tryClick, tryFill };
+module.exports = { login, loginAndSaveState, authState, dismissOnboarding, navigateToSTR, clickTab, smoothScroll, tryClick, tryFill };
